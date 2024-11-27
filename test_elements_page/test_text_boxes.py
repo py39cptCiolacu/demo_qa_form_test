@@ -3,7 +3,7 @@ from playwright.async_api import Page
 from element_interactor import ElementInteractor
 from element_getter import ElementGetter
 
-URL = "https://demoqa.com/radio-button"
+URL = "https://demoqa.com/text-box"
 
 def test_full_name(page: Page, element_interactor: ElementInteractor, element_getter: ElementGetter):
     page.goto(URL)
