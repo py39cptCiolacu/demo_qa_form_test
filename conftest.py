@@ -12,13 +12,3 @@ def page(playwright: Playwright, request) -> Page:
     page = context.new_page()
     yield page
     browser.close()
-
-
-@pytest.fixture
-def element_interactor(page: Page) -> ElementInteractor:
-    return ElementInteractor(page=page)
-
-
-@pytest.fixture
-def element_getter(page: Page) -> ElementGetter:
-    return ElementGetter(page)
