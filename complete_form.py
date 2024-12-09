@@ -17,7 +17,6 @@ class CompleteForm:
         self.page = navigate(self.page, self.destination)
         self.__find_type()
         self.__match_checking()
-        time.sleep(3)
 
     def __find_type(self):
     ####  Might not been always the case
