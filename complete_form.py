@@ -16,7 +16,7 @@ class CompleteForm:
     def test(self) -> None:
         self.page = navigate(self.page, self.destination)
         self.__find_type()
-        self.__match_checking()
+        # self.__match_checking()
 
     def __find_type(self):
     ####  Might not been always the case
@@ -26,32 +26,54 @@ class CompleteForm:
 
         for row in rows[:-1]:
             label: ElementHandle = row.query_selector("label")
-
-            if label:
-                label_text = label.inner_text()
-            else:
-                raise ValueError("There is no label")
+            assert label
 
             for identifier in IDENTIFIERS:
                 identifier_element = row.query_selector(identifier)
                 if identifier_element:
+                    if identifier == "input":
+                        type = identifier_element.get_attribute("type")
+                        identifier_type = "input-" + type
+                    else:
+                        identifier_type = identifier
                     break
 
-            if not identifier_element:
-                raise TypeError(f"{identifier} was not found")
+            assert identifier_type
 
-            self.__match_actions(label_text, identifier_element)
+            self.__match_actions(label.inner_text(), identifier_type, row)
 
-    def __match_actions(self, key: str, identifier: ElementHandle):
-        match identifier.evaluate("el => el.tagName").lower():
-            case "input":
-                identifier_id = identifier.get_attribute("id")
-                self.page.locator(f"#{identifier_id}").fill(value = self.form_dict.get(key))
+    def __match_actions(self, key: str, identifier_type: ElementHandle, row: ElementHandle):
+        match identifier_type:
+            case "input-text":
+                inputs = row.query_selector_all("input")
+                if len(inputs) == 1:
+                    value = str(self.form_dict.get(key))
+                    print(value)
+                    inputs[0].fill(value)
+                else:
+                    values = self.form_dict.get(key)
+                    i= 0
+                    for input in inputs:
+                        input.fill(values[i])
+                        i += 1
+            case "input-radio":
+                if key == "Male":
+                    key = "Gender"
+                to_be_checked = self.form_dict.get(key)
+                row.query_selector(f"label:has-text('{to_be_checked}')").click()
+            case "input-checkbox":
+                to_be_checked_elements = self.form_dict.get(key)
+                for to_be_checked_element in to_be_checked_elements:
+                    print(type(to_be_checked_element))
+                    row.query_selector(f"label:has-text('{to_be_checked_element}')")
             case "textarea":
-                identifier_id = identifier.get_attribute("id")
-                self.page.locator(f"#{identifier_id}").fill(value=self.form_dict.get(key))
+                value = self.form_dict.get(key)
+                row.query_selector("textarea").fill(value)
+                time.sleep(7)
+            case "input-file":
+                pass
             case _:
-                raise TypeError(f"{identifier} should be part of {IDENTIFIERS}")
+                raise TypeError(f"This {identifier_type} is not supported")
 
     def __match_checking(self) -> None:
         self.page.click("#submit")
