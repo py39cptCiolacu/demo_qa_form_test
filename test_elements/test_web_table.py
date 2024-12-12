@@ -1,11 +1,10 @@
 from playwright.async_api import Page
-
-from individuial_elements import IndividualElements
+from web_tables import WebTable
+from navigator import navigate
 
 def test_web_table(page: Page) -> None:
 
     form_dict = {
-        "destination": "Elements>Web Tables",
         "Add":
         [
             {
@@ -32,8 +31,22 @@ def test_web_table(page: Page) -> None:
             "Last Name": "Test",
             "Email": "test@test.co"
             }
+        ],
+        "Edit":
+        [
+            {
+            "First Name": "Test2",
+            "Last Name": "Test",
+            "Email": "test2@test.co",
+
+            "New-Salary": "150000"
+            }
         ]
+
     }
 
-    web_table_test = IndividualElements(form_dict = form_dict, page = page)
+    destination = "Elements>Web Tables"
+    page = navigate(page, destination)
+
+    web_table_test = WebTable(form_dict = form_dict, page = page)
     web_table_test.test()

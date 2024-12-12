@@ -1,14 +1,15 @@
-from playwright.async_api import Page
+from playwright.sync_api import Page
 
 from individuial_elements import IndividualElements
+from navigator import navigate
 
 def test_radio_button(page: Page) -> None:
 
     form_dict = {
-        "destination" : "Elements>Radio Button",
         "Do you like the site?" : "Yes"
     }
 
-    radio_button_test = IndividualElements(form_dict=form_dict, page=page)
+    page = navigate(page, "Elements>Radio Button")
+    radio_button_test = IndividualElements(form_dict=form_dict, page=page, type = "Radio Button")
     radio_button_test.test()
 

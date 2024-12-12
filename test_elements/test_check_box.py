@@ -1,9 +1,10 @@
 from playwright.async_api import Page
 from individuial_elements import IndividualElements
 
+from navigator import navigate
+
 def test_check_box(page: Page) -> None:
     form_dict = {
-        "destination": "Elements>Check Box",
         "Home": {
             "Desktop" : ["Notes"],
             "Documents": {
@@ -13,5 +14,6 @@ def test_check_box(page: Page) -> None:
         }
     }
 
-    check_box_test = IndividualElements(form_dict=form_dict, page=page)
+    page = navigate(page, "Elements>Check Box")
+    check_box_test = IndividualElements(form_dict=form_dict, page=page, type="Check Box")
     check_box_test.test()

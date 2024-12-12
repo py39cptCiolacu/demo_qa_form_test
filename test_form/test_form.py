@@ -1,9 +1,10 @@
-from playwright.async_api import Page
+from playwright.sync_api import Page
 from complete_form import CompleteForm
+
+from navigator import navigate
 
 def test_form(page: Page) -> None:
     form_dict = {
-        "destination": "Forms>Practice Form",
         "Name": ["Test", "Test"],
         "Email": "test@test.co",
         "Gender" : "Male",
@@ -15,5 +16,6 @@ def test_form(page: Page) -> None:
         "State and City": ["NCR", "Delhi"]
     }
 
+    page = navigate(page,"Forms>Practice Form")
     complete_form_test = CompleteForm(form_dict=form_dict, page=page, test_with_modal=True)
     complete_form_test.test()

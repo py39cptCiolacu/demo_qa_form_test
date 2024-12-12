@@ -1,4 +1,4 @@
-from playwright.async_api import Page, ElementHandle
+from playwright.sync_api import Page, ElementHandle
 from navigator import navigate
 import time
 
@@ -7,31 +7,33 @@ IDENTIFIERS = ["input", "textarea"]
 class CompleteForm:
 
     def __init__(self, form_dict: dict, page: Page, test_with_modal: bool = False) -> None:
-
-        if "destination" in form_dict.keys():
-            self.destination = form_dict.get("destination")
-            form_dict.pop("destination")
-
         self.form_dict = form_dict
         self.page = page
         self.test_with_modal = test_with_modal
 
     def test(self) -> None:
-        self.page = navigate(self.page, self.destination)
-        self.find_type_and_action()
+        self.find_type_and_take_action()
         self.__check_by_type()
         time.sleep(3)
 
-    def find_type_and_action(self):
+    def find_type_and_take_action(self):
     ####  Might not been always the case
         form_element = self.page.query_selector("#userForm")
         rows: list[ElementHandle] = form_element.query_selector_all(".mt-2.row")
     ####
 
-        for row in rows:
-            label: ElementHandle = row.query_selector("label")
-            assert label
+        dict_row_label = self.__find_row_label_pairs(rows)
+        print(dict_row_label.keys())
 
+        labels_to_iterate = []
+        for label in dict_row_label.keys():
+            if label in self.form_dict.keys():
+                labels_to_iterate.append(label)
+
+        print(labels_to_iterate)
+
+        for label in labels_to_iterate:
+            row = dict_row_label[label]
             for identifier in IDENTIFIERS:
                 identifier_element = row.query_selector(identifier)
                 if identifier_element:
@@ -44,15 +46,27 @@ class CompleteForm:
 
             assert identifier_type
 
-            self.__match_actions(label.inner_text(), identifier_type, row)
+            self.__match_actions(label, identifier_type, row)
+
+    def __find_row_label_pairs(self, rows: list[ElementHandle]) -> dict:
+        change_key_dict = {"Male": "Gender", "Mobile(10 Digits)": "Mobile"}
+        dict_row_label = {}
+        for row in rows:
+            label: ElementHandle = row.query_selector("label")
+            if not label:
+                continue
+            label_text = label.inner_text()
+            if label_text in change_key_dict:
+                label_text = change_key_dict.get(label_text)
+            dict_row_label[label_text] = row
+
+        return dict_row_label
 
     def __match_actions(self, key: str, identifier_type: ElementHandle, row: ElementHandle) -> None:
-        change_key_dict = {"Male": "Gender", "Mobile(10 Digits)": "Mobile"}
-        if key in change_key_dict:
-            key = change_key_dict.get(key)
-
         match identifier_type:
             case "input-text":
+                self.__case_input_text(key, row)
+            case "input-email":
                 self.__case_input_text(key, row)
             case "input-radio":
                 to_be_checked = self.form_dict.get(key)
@@ -115,6 +129,7 @@ class CompleteForm:
             assert self.form_dict.get(inner_text_as_list[0]) == inner_text_as_list[1], f"Expected {self.form_dict.get(inner_text_as_list[0])} but got {inner_text_as_list[1]}"
 
     def __get_modal_results(self):
+        time.sleep(20)
         modal = self.page.query_selector(".modal-body")
         assert modal
 

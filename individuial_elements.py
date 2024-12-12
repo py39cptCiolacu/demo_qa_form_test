@@ -1,39 +1,27 @@
 import time
 
-from playwright.async_api import Page
+from playwright.sync_api import Page, ElementHandle
+
 from navigator import navigate
 
 from complete_form import CompleteForm
 
 class IndividualElements:
 
-    def __init__(self, form_dict: dict, page: Page) -> None:
-        self.destination = form_dict.get("destination")
-        form_dict.pop("destination")
-
+    def __init__(self, type: str, form_dict: dict, page: Page) -> None:
+        self.type = type
         self.form_dict = form_dict
         self.page = page
         self.checked = []
 
     def test(self):
-        navigate(self.page, self.destination)
-        match self.destination:
-            case "Elements>Check Box":
+        match self.type:
+            case "Check Box":
                 self.__press_checkboxes()
                 self.__test_checkboxes()
-            case "Elements>Radio Button":
+            case "Radio Button":
                 self.__press_radio_button()
                 self.__test_radio_button()
-            case "Elements>Web Tables":
-                self.__clear_table()
-
-                if "Add" in self.form_dict.keys():
-                    self.__add_elements(self.form_dict.get("Add"))
-
-                if "Delete" in self.form_dict.keys():
-                    self.__delete_elements(self.form_dict.get("Delete"))
-
-                time.sleep(10)
 
     def __press_checkboxes(self):
         self.page.locator(".rct-option.rct-option-expand-all").click()
@@ -115,60 +103,104 @@ class IndividualElements:
         result = self.page.query_selector(".text-success").inner_text()
         assert result == self.form_dict.get(key)
 
-    def __clear_table(self):
-        delete_button = self.page.query_selector("span[title='Delete']")
-        while delete_button:
-            delete_button.click()
-            delete_button = self.page.query_selector("span[title='Delete']")
-
-    def __add_elements(self, to_be_added: list):
-        for element in to_be_added:
-            self.page.locator("#addNewRecordButton").click()
-            complete_form = CompleteForm(form_dict=element, page = self.page)
-            complete_form.find_type_and_action()
-            self.page.locator("#submit").click()
-
-    def __get_all_elements(self) -> list:
-        elements = []
-        columns = self.__get_all_columns()
-
-        rows = self.page.query_selector_all("div.rt-tr-group")
-        for row in rows:
-            new_element = {}
-            cells = row.query_selector_all("div")[:6]
-
-            if cells[0].inner_text() == "":
-                break
-            else:
-                print(cells[0].inner_text() ,type(cells[0].inner_text()))
-
-            for (cell, column) in zip(cells, columns):
-                new_element[column]= cell.inner_text()
-
-            elements.append(new_element)
-
-        return elements
-
-    def __get_all_columns(self) -> list:
-        return ["First Name", "Last Name", "Age", "Email", "Salary", "Department"]
-
-    def __test_add_elements(self):
-        pass
-
-    def __edit_element(self):
-        pass
-
-    def __delete_elements(self, to_be_deleted: list[dict]):
-        search_box = self.page.query_selector("#searchBox")
-
-        for element in to_be_deleted:
-            search_box.fill('')
-            search_box.fill(element.get("Email"))
-            rows =  self.page.query_selector_all("div.rt-tr-group")
-
-            for row in rows:
-                cells = row.query_selector_all("div")[:2]
-                if cells[0].inner_text() == element.get("First Name") and cells[1].inner_text() == element.get("Last Name"):
-                    delete_button = row.query_selector("span[title='Delete']")
-                    delete_button.click()
-
+    # def __clear_table(self):
+    #     delete_button = self.page.query_selector("span[title='Delete']")
+    #     while delete_button:
+    #         delete_button.click()
+    #         delete_button = self.page.query_selector("span[title='Delete']")
+    #
+    # def __add_elements(self, to_be_added: list):
+    #     for element in to_be_added:
+    #         self.page.locator("#addNewRecordButton").click()
+    #         complete_form = CompleteForm(form_dict=element, page = self.page)
+    #         complete_form.find_type_and_take_action()
+    #         self.page.locator("#submit").click()
+    #
+    # def __get_all_elements(self) -> list:
+    #     elements = []
+    #     columns = self.__get_all_columns()
+    #
+    #     rows = self.page.query_selector_all("div.rt-tr-group")
+    #     for row in rows:
+    #         new_element = {}
+    #         cells = row.query_selector_all("div")[:6]
+    #
+    #         if cells[0].inner_text() == "":
+    #             break
+    #         # else:
+    #         #     print(cells[0].inner_text() ,type(cells[0].inner_text()))
+    #
+    #         for (cell, column) in zip(cells, columns):
+    #             new_element[column]= cell.inner_text()
+    #
+    #         elements.append(new_element)
+    #
+    #     return elements
+    #
+    # def __get_all_columns(self) -> list:
+    #
+    #     table_head_elements = self.page.query_selector_all("div[role='columnheader']")
+    #     columns = []
+    #     for table_head_element in table_head_elements:
+    #         columns.append(table_head_element.inner_text())
+    #
+    #     if "Action" in columns:
+    #         columns.remove("Action")
+    #
+    #     return columns
+    #
+    # def __edit_elements(self, to_be_edited):
+    #
+    #     for element in to_be_edited:
+    #         element_row = self.__find_element(element)
+    #         assert element_row, "The element could not be found"
+    #         edit_button = element_row.query_selector("span[title='Edit']")
+    #         edit_button.click()
+    #
+    #         fields_to_be_edited = {}
+    #
+    #         for key in element.keys():
+    #             if key.startswith("New-"):
+    #                 new_key = key.removeprefix("New-")
+    #                 fields_to_be_edited[new_key] = element[key]
+    #
+    #         complete_form = CompleteForm(form_dict = fields_to_be_edited, page = self.page)
+    #         complete_form.find_type_and_take_action()
+    #
+    #         user_form = self.page.query_selector("#userForm")
+    #         labels = user_form.query_selector_all("label")
+    #
+    #         for label in labels:
+    #             if label.inner_text() in fields_to_be_edited.keys():
+    #                 pass
+    #
+    #         self.page.locator("#submit").click()
+    #
+    # def __delete_elements(self, to_be_deleted: list[dict]):
+    #
+    #     for element in to_be_deleted:
+    #         element_row = self.__find_element(element)
+    #         assert element_row
+    #         delete_button = element_row.query_selector("span[title='Delete']")
+    #         delete_button.click()
+    #
+    # def __find_element(self, element: dict) -> ElementHandle | None:
+    #
+    #     search_box = self.page.query_selector("#searchBox")
+    #     search_box.fill('')
+    #     search_box.fill(element.get('Email'))
+    #     rows = self.page.query_selector_all("div[role='row']")
+    #
+    #     for row in rows:
+    #         cells = row.query_selector_all("div")[:2]
+    #         if cells[0].inner_text().strip() == element.get("First Name") and cells[1].inner_text().strip() == element.get("Last Name"):
+    #             element_row = row
+    #             break
+    #
+    #     if not element_row:
+    #         return None
+    #
+    #     return element_row
+    #
+    # def __test_add_elements(self):
+    #     pass
