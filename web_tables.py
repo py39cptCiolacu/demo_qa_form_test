@@ -1,6 +1,6 @@
 import time
 
-from playwright.sync_api import Page, ElementHandle
+from playwright.sync_api import Page, Locator
 from complete_form import CompleteForm
 
 
@@ -17,7 +17,6 @@ class WebTable:
             self.__delete_elements(self.form_dict.get("Delete"))
             self.__test_delete_elements(self.form_dict.get("Delete"))
         if "Edit" in self.form_dict.keys():
-            print(self.__get_all_elements())
             for element in self.form_dict.get("Edit"):
                 element_row_before = self.__find_element_row(element)
                 element_dict_before = self.__element_row_to_dict(element_row_before)
@@ -30,10 +29,10 @@ class WebTable:
                 self.__test_edit_element(element_dict_before, element_dict_after, element)
 
     def __clear_table(self):
-        delete_button = self.page.query_selector("span[title='Delete']")
+        delete_button = self.page.locator("span[title='Delete']")
         while delete_button:
             delete_button.click()
-            delete_button = self.page.query_selector("span[title='Delete']")
+            delete_button = self.page.locator("span[title='Delete']")
 
     def __add_elements(self, to_be_added: list):
         for element in to_be_added:
@@ -63,7 +62,7 @@ class WebTable:
 
     def __get_all_columns(self) -> list:
 
-        table_head_elements = self.page.query_selector_all("div[role='columnheader']")
+        table_head_elements = self.page.locator("div[role='columnheader']").all()
         columns = []
         for table_head_element in table_head_elements:
             columns.append(table_head_element.inner_text())
@@ -73,25 +72,25 @@ class WebTable:
 
         return columns
 
-    def __find_element_row(self, element: dict) -> ElementHandle | None:
+    def __find_element_row(self, element: dict) -> Locator | None:
 
-        search_box = self.page.query_selector("#searchBox")
+        search_box = self.page.locator("#searchBox")
         search_box.fill('')
         search_box.fill(element.get('Email'))
-        rows = self.page.query_selector_all("div[role='row']")
+        rows = self.page.locator("div[role='row']").all()
 
         for row in rows:
-            cells = row.query_selector_all("div")[:2]
+            cells = row.locator("div").all()[:2]
             if cells[0].inner_text().strip() == element.get("First Name") and cells[
                 1].inner_text().strip() == element.get("Last Name"):
                 return row
 
         return None
 
-    def __element_row_to_dict(self, row: ElementHandle) -> dict:
+    def __element_row_to_dict(self, row: Locator) -> dict:
 
         columns = self.__get_all_columns()
-        cells = row.query_selector_all(".rt-td")[:6]
+        cells = row.locator(".rt-td").all()[:6]
         element_dict = {}
         for cell, column in zip(cells, columns):
             element_dict[column] = cell.inner_text()
@@ -102,7 +101,7 @@ class WebTable:
 
         element_row = self.__find_element_row(element)
         assert element_row, "The element could not be found"
-        edit_button = element_row.query_selector("span[title='Edit']")
+        edit_button = element_row.locator("span[title='Edit']")
         edit_button.click()
 
         fields_to_be_edited = {}
@@ -121,7 +120,8 @@ class WebTable:
         for element in to_be_deleted:
             element_row = self.__find_element_row(element)
             assert element_row
-            delete_button = element_row.query_selector("span[title='Delete']")
+
+            delete_button = element_row.locator("span[title='Delete']")
             delete_button.click()
 
     def __test_add_elements(self, elements: list[dict]) -> None:

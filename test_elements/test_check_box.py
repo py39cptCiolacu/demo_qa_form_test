@@ -8,7 +8,7 @@ def test_check_box(page: Page) -> None:
         "Home": {
             "Desktop" : ["Notes"],
             "Documents": {
-                "WorkSpace": ["All"],
+                "WorkSpace": ["*"],
                 "Office": ["Private", "General"]
             },
         }
